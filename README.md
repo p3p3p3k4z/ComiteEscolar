@@ -1,3 +1,4 @@
+# Comite Escolar
 
 ## Cómo ejecutar la aplicación
 
@@ -37,6 +38,11 @@
     ```bash
     uvicorn api.main:app --reload
     ```
+    o tambien
+    
+    ```bash
+    python3 run_fastapi.py
+    ```
 
 ### Interfaz Web (Flask)
 
@@ -46,6 +52,11 @@
 
     ```bash
     flask --app web/app.py run --debug
+    ```
+    o tambien
+    
+     ```bash
+    python3 run_flask.py
     ```
 
     La interfaz web estará disponible en `http://127.0.0.1:5000` (por defecto). 
