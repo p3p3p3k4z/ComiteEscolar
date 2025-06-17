@@ -1,0 +1,48 @@
+# docker-compose.yml
+
+version: '3.8'
+
+services:
+  sgcpf_db:
+    image: postgres:15
+    container_name: sgcpf_postgres
+    restart: always
+    environment:
+      POSTGRES_USER: sgcpf_user
+      POSTGRES_PASSWORD: sgcpf_password
+      POSTGRES_DB: sgcpf_db
+    ports:
+      - "5432:5432"
+    volumes:
+      # Mapea tu script init.sql para la inicialización de la base de datos
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql
+      # Mapea el volumen persistente para los datos de PostgreSQL
+      - ./pg_data_sgcpf_host:/var/lib/postgresql/data
+    networks:
+      - sgcpf_network # Este servicio usa esta red
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+  sgcpf_pgadmin:
+    image: dpage/pgadmin4
+    container_name: sgcpf_pgadmin
+    restart: always
+    ports:
+      - "8085:80" # Puedes cambiar el puerto si 8084 ya está en uso
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@sgcpf.com
+      PGADMIN_DEFAULT_PASSWORD: admin_password
+      PGADMIN_LISTEN_PORT: 80
+    networks:
+      - sgcpf_network # Este servicio también usa esta red
+    depends_on:
+      - sgcpf_db
+
+# Define la red aquí, al mismo nivel de indentación que 'services:'
+networks:
+  sgcpf_network:
+    driver: bridge

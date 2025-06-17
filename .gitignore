@@ -1,0 +1,25 @@
+# Entorno Virtual
+venv/
+.venv/
+env/
+.env/
+__pycache__/
+*.pyc
+*.pyd
+*.egg-info/
+dist/
+build/
+develop-eggs/
+lib64/
+sdist/
+wheels/
+pip-log.txt
+pip-delete-this.txt
+.pytest_cache/
+.coverage
+.tox/
+*.log
+*.swp
+*.swo
+.DS_Store
+app/web/static/uploads/
