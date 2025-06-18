@@ -80,13 +80,14 @@ Una vez que docker compose up -d esté en ejecución, puedes acceder a pgAdmin e
         Marca "Save password?".
     Haz clic en "Save".
 
-#### Reiniciar docker
+#### Reiniciar proyecto o Iniciar
 
 ```bash
 docker compose down -v # Detiene y elimina contenedores, redes y volúmenes (reinicia la DB desde cero)
 sudo rm -rf pg_data_agenda_host  ##Importante por si e cambio la base
 sleep 60 #Esto lo pongo porque el docker tarda en levanrse con docker ps se puede checar eso
 docker compose up -d   # Levanta los servicios Docker
+sudo chmod -R 777 pg_data_agenda_hos
 ```
 
 **Variables de Entorno:**
@@ -277,6 +278,13 @@ git checkout -b <nombre-de-la-nueva-rama>
 git push origin <rama_creada>
 ```
 
+### Mezclar ramas
+```bash
+git checkout main
+git pull origin main
+git merge AgregarProyecto
+git push origin main
+```
 #### General llave
 Esto es en caso de no admitir la contraseña
 <https://github.com/settings/tokens>
