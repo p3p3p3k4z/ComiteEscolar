@@ -1,37 +1,56 @@
-# app/web/routes.py
+# -*- coding: utf-8 -*-
+# app/web/rutas.py
 
 from flask import Blueprint, render_template
+from datetime import date
 
 # Crea un Blueprint para organizar las rutas web
-bp = Blueprint('web', __name__)
+bp_web = Blueprint('web', __name__)
 
-@bp.route('/')
-def hello_world():
+@bp_web.route('/')
+def pagina_inicio():
     """
-    Ruta de ejemplo para mostrar "Hola Mundo".
-    Renderiza una plantilla simple (que crearemos en la memoria para este ejemplo).
+    Ruta para la página de inicio de la aplicación web.
+    Ahora mostrará un listado de proyectos escolares.
     """
-    # En un proyecto real, tendrías un archivo HTML en app/web/templates/
-    # Por ahora, simplemente retornamos una cadena HTML.
-    return """
-    <!DOCTYPE html>
-    <html lang="es">
-    <head>
-        <meta charset="UTF-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>Hola Mundo Flask</title>
-        <link href="[https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css](https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css)" rel="stylesheet">
-        <style>
-            body {
-                font-family: 'Inter', sans-serif;
-            }
-        </style>
-    </head>
-    <body class="bg-gray-100 flex items-center justify-center h-screen">
-        <div class="bg-white p-8 rounded-lg shadow-md text-center">
-            <h1 class="text-3xl font-bold text-gray-800 mb-4">¡Hola Mundo desde Flask!</h1>
-            <p class="text-gray-600">Esta es una página de ejemplo de la capa web.</p>
-        </div>
-    </body>
-    </html>
+    # Aquí simulamos una lista de proyectos.
+    # En una aplicación real, esto provendría de tu ServicioProyecto (ServicioProyecto.obtener_todos_los_proyectos())
+    proyectos_ejemplo = [
+        {
+            "id": 1,
+            "nombre": "Campaña de Reciclaje 'Verde Escuela'",
+            "descripcion": "Iniciativa para fomentar el reciclaje de papel y plásticos en toda la escuela.",
+            "fecha_inicio": date(2025, 9, 1),
+            "fecha_fin": date(2025, 12, 15),
+            "estado": "Activo",
+            "responsable": "Juan Pérez (Maestro)"
+        },
+        {
+            "id": 2,
+            "nombre": "Construcción de Jardín Botánico Escolar",
+            "descripcion": "Creación de un espacio verde para el estudio de plantas y recreación.",
+            "fecha_inicio": date(2026, 3, 1),
+            "fecha_fin": date(2026, 6, 30),
+            "estado": "Pendiente",
+            "responsable": "María García (Directora)"
+        },
+        {
+            "id": 3,
+            "nombre": "Feria de Ciencias Interescolar 2025",
+            "descripcion": "Organización de un evento para que los estudiantes presenten sus proyectos científicos.",
+            "fecha_inicio": date(2025, 10, 1),
+            "fecha_fin": date(2025, 11, 20),
+            "estado": "Activo",
+            "responsable": "Carlos López (Secretario)"
+        }
+    ]
+    return render_template('inicio.html', proyectos=proyectos_ejemplo)
+
+@bp_web.route('/bienvenido')
+def pagina_bienvenida():
     """
+    Ruta de ejemplo para una página de bienvenida.
+    """
+    mensaje = "¡Bienvenido al Sistema de Gestión del Comité de Padres de Familia!"
+    return render_template('inicio.html', mensaje_personalizado=mensaje)
+

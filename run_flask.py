@@ -1,11 +1,6 @@
-# run_flask.py
-
-from app.web import create_app
-
-# Crea la instancia de la aplicación Flask
-app = create_app()
+from app.web import crear_app_web
+app_flask = crear_app_web()
 
 if __name__ == '__main__':
-    # Ejecuta la aplicación Flask en modo depuración
-    # En producción, usarías un servidor WSGI como Gunicorn o uWSGI
-    app.run(debug=True, port=5000)
+    app_flask.run(debug=True, port=5000)
+
