@@ -8,11 +8,11 @@ def crear_app_web():
     """
     Crea y configura la instancia de la aplicación web Flask.
     """
-    # Define la ruta absoluta a la carpeta de plantillas.
-    # Esto es más robusto y evita problemas de "TemplateNotFound".
+    # Define la ruta absoluta a la carpeta de plantillas y estáticos
     template_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), 'templates'))
     static_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), 'static'))
 
+    # Pasa las rutas absolutas al constructor de Flask
     app = Flask(__name__, template_folder=template_dir, static_folder=static_dir)
 
     # Puedes cargar configuraciones aquí si las necesitas
@@ -20,7 +20,6 @@ def crear_app_web():
     # app.config.from_object(Configuracion)
 
     # Importa y registra las rutas de la aplicación web
-    # ¡Asegúrate de que el archivo se llama 'rutas.py' en tu sistema de archivos!
     from . import rutas
     app.register_blueprint(rutas.bp_web)
 
