@@ -1,15 +1,29 @@
 -- init.sql
 -- Este script se ejecuta una vez cuando el contenedor 'sgcpf_db' se inicia por primera vez.
 
+-- Eliminar tablas si existen para asegurar una creación limpia (solo para desarrollo)
+DROP TABLE IF EXISTS financial_movements CASCADE;
+DROP TABLE IF EXISTS proposals CASCADE;
+DROP TABLE IF EXISTS survey_responses CASCADE;
+DROP TABLE IF EXISTS surveys CASCADE;
+DROP TABLE IF EXISTS event_notifications CASCADE;
+DROP TABLE IF EXISTS events CASCADE;
+DROP TABLE IF EXISTS meeting_attendees CASCADE;
+DROP TABLE IF EXISTS meetings CASCADE;
+DROP TABLE IF EXISTS reports CASCADE;
+DROP TABLE IF EXISTS projects CASCADE;
+DROP TABLE IF EXISTS committee_members CASCADE;
+DROP TABLE IF EXISTS documents CASCADE;
+DROP TABLE IF EXISTS committees CASCADE;
+DROP TABLE IF EXISTS users CASCADE;
+
 -- Crear la tabla de Usuarios
 CREATE TABLE IF NOT EXISTS users (
     id SERIAL PRIMARY KEY,
     name VARCHAR(100) NOT NULL,
     last_name VARCHAR(100) NOT NULL,
     email VARCHAR(100) UNIQUE NOT NULL,
-    -- Aunque las librerías de seguridad fueron removidas del requirements.txt,
-    -- mantener un campo para el hash de la contraseña es crucial para la gestión de usuarios
-    password_hash VARCHAR(255) NOT NULL,
+    password_hash VARCHAR(255) NOT NULL, -- Mantener para consistencia, aunque la seguridad se manejara fuera
     role VARCHAR(50) NOT NULL -- Ej: 'Administrador', 'Tesorero', 'Secretario', 'PresidenteComite', 'Director', 'PadreDeFamilia'
 );
 
@@ -41,18 +55,18 @@ CREATE TABLE IF NOT EXISTS documents (
     FOREIGN KEY (uploader_id) REFERENCES users (id) ON DELETE SET NULL
 );
 
--- Crear la tabla de Proyectos
+-- Crear la tabla de Proyectos (coincide con el modelo Proyecto.py)
 CREATE TABLE IF NOT EXISTS projects (
     id SERIAL PRIMARY KEY,
-    name VARCHAR(255) NOT NULL,
+    name VARCHAR(255) NOT NULL UNIQUE, -- Añadido UNIQUE para el nombre del proyecto
     responsible_user_id INTEGER, -- Encargado del proyecto (un usuario)
     start_date DATE NOT NULL,
     end_date DATE,
-    main_document_id INTEGER, -- Referencia al documento principal del proyecto
-    status VARCHAR(50) NOT NULL DEFAULT 'activo', -- Ej: 'activo', 'finalizado', 'pendiente'
-    FOREIGN KEY (responsible_user_id) REFERENCES users (id) ON DELETE SET NULL,
-    FOREIGN KEY (main_document_id) REFERENCES documents (id) ON DELETE SET NULL
+    document_path VARCHAR(255), -- Ruta o ID del documento principal (campo en modelo: ruta_documento)
+    status VARCHAR(50) NOT NULL DEFAULT 'activo', -- Ej: 'activo', 'finalizado', 'pendiente', 'aprobado', 'rechazado'
+    FOREIGN KEY (responsible_user_id) REFERENCES users (id) ON DELETE SET NULL
 );
+
 
 -- Crear la tabla de Reportes (incluyendo reportes financieros y de avance de construcción)
 CREATE TABLE IF NOT EXISTS reports (
@@ -152,3 +166,70 @@ CREATE TABLE IF NOT EXISTS financial_movements (
     FOREIGN KEY (registered_by_user_id) REFERENCES users (id) ON DELETE SET NULL
 );
 
+
+-- Insertar datos de ejemplo
+-- Usuarios de ejemplo (roles: Director, Secretario, PadreDeFamilia)
+INSERT INTO users (name, last_name, email, password_hash, role) VALUES
+('Juan', 'Pérez', 'juan.perez@example.com', 'hashed_password_1', 'Director'),
+('María', 'García', 'maria.garcia@example.com', 'hashed_password_2', 'Secretario'),
+('Carlos', 'López', 'carlos.lopez@example.com', 'hashed_password_3', 'PadreDeFamilia'),
+('Ana', 'Díaz', 'ana.diaz@example.com', 'hashed_password_4', 'Tesorero');
+
+-- Proyectos de ejemplo
+INSERT INTO projects (name, responsible_user_id, start_date, end_date, document_path, status) VALUES
+('Proyecto de Reforestación "Pulmón Verde"', (SELECT id FROM users WHERE email = 'juan.perez@example.com'), '2025-07-01', '2025-12-31', '/docs/reforestacion_plan.pdf', 'activo'),
+('Feria de Ciencias 2025', (SELECT id FROM users WHERE email = 'maria.garcia@example.com'), '2025-09-15', '2025-11-20', '/docs/feria_ciencias_bases.pdf', 'activo'),
+('Mejora de Instalaciones Deportivas', (SELECT id FROM users WHERE email = 'juan.perez@example.com'), '2026-01-10', '2026-06-30', '/docs/instalaciones_deportivas.pdf', 'pendiente'),
+('Taller de Crianza Positiva', (SELECT id FROM users WHERE email = 'carlos.lopez@example.com'), '2025-08-01', '2025-08-30', '/docs/crianza_positiva_temario.pdf', 'activo');
+
+-- Documentos de ejemplo
+INSERT INTO documents (name, type, file_path, uploader_id, created_at) VALUES
+('Acta de Reunión 01/07/2025', 'Acta', '/actas/acta_01072025.pdf', (SELECT id FROM users WHERE email = 'maria.garcia@example.com'), '2025-07-01 10:00:00'),
+('Plan de Reforestación Detallado', 'Proyecto', '/docs/reforestacion_plan.pdf', (SELECT id FROM users WHERE email = 'juan.perez@example.com'), '2025-06-25 15:30:00'),
+('Informe Financiero Julio 2025', 'Reporte Financiero', '/reportes/fin_julio2025.xlsx', (SELECT id FROM users WHERE email = 'ana.diaz@example.com'), '2025-08-05 09:00:00');
+
+-- Comités de ejemplo
+INSERT INTO committees (name, period, status) VALUES
+('Comité Escolar 2024-2025', '2024-2025', 'activo'),
+('Comité de Finanzas', '2025', 'activo');
+
+-- Miembros del comité de ejemplo
+INSERT INTO committee_members (committee_id, user_id) VALUES
+((SELECT id FROM committees WHERE name = 'Comité Escolar 2024-2025'), (SELECT id FROM users WHERE email = 'juan.perez@example.com')),
+((SELECT id FROM committees WHERE name = 'Comité Escolar 2024-2025'), (SELECT id FROM users WHERE email = 'maria.garcia@example.com')),
+((SELECT id FROM committees WHERE name = 'Comité Escolar 2024-2025'), (SELECT id FROM users WHERE email = 'carlos.lopez@example.com')),
+((SELECT id FROM committees WHERE name = 'Comité de Finanzas'), (SELECT id FROM users WHERE email = 'ana.diaz@example.com'));
+
+-- Movimientos financieros de ejemplo
+INSERT INTO financial_movements (type, amount, transaction_date, concept, registered_by_user_id) VALUES
+('ingreso', 5000.00, '2025-07-10', 'Donación de la comunidad', (SELECT id FROM users WHERE email = 'ana.diaz@example.com')),
+('egreso', 1500.00, '2025-07-15', 'Compra de materiales de oficina', (SELECT id FROM users WHERE email = 'ana.diaz@example.com')),
+('ingreso', 250.00, '2025-07-20', 'Cuotas de padres - Julio', (SELECT id FROM users WHERE email = 'ana.diaz@example.com'));
+
+-- Reuniones de ejemplo
+INSERT INTO meetings (meeting_date, meeting_time, location, agenda, minutes_document_id) VALUES
+('2025-07-01', '09:00:00', 'Sala de Juntas', 'Discusión de Proyectos y Finanzas', (SELECT id FROM documents WHERE name = 'Acta de Reunión 01/07/2025'));
+
+-- Asistencia a reuniones de ejemplo
+INSERT INTO meeting_attendees (meeting_id, user_id, status) VALUES
+((SELECT id FROM meetings WHERE meeting_date = '2025-07-01'), (SELECT id FROM users WHERE email = 'juan.perez@example.com'), 'presente'),
+((SELECT id FROM meetings WHERE meeting_date = '2025-07-01'), (SELECT id FROM users WHERE email = 'maria.garcia@example.com'), 'presente'),
+((SELECT id FROM meetings WHERE meeting_date = '2025-07-01'), (SELECT id FROM users WHERE email = 'carlos.lopez@example.com'), 'ausente');
+
+-- Eventos de ejemplo
+INSERT INTO events (name, description, event_datetime, location, target_audience) VALUES
+('Día Familiar de Limpieza Escolar', 'Actividad para limpiar y embellecer la escuela con la participación de las familias.', '2025-09-07 09:00:00', 'Patio Central', 'padres'),
+('Noche de Talentos 2025', 'Evento para que los estudiantes muestren sus habilidades artísticas y musicales.', '2025-10-25 18:00:00', 'Auditorio Escolar', 'todos');
+
+-- Propuestas/Quejas de ejemplo
+INSERT INTO proposals (type, content, submission_date, submitter_id) VALUES
+('Propuesta', 'Sugiero instalar más bebederos en el patio de primaria.', '2025-07-05', (SELECT id FROM users WHERE email = 'carlos.lopez@example.com')),
+('Queja', 'Problemas con la iluminación en el pasillo principal.', '2025-07-08', (SELECT id FROM users WHERE email = 'carlos.lopez@example.com'));
+
+-- Encuestas de ejemplo
+INSERT INTO surveys (creator_id, questions, deadline_date, created_at) VALUES
+((SELECT id FROM users WHERE email = 'juan.perez@example.com'), '[{"question": "¿Está satisfecho con la comunicación del comité?", "type": "radio", "options": ["Si", "No"]}, {"question": "¿Qué proyectos le gustaría ver en el futuro?", "type": "text"}]', '2025-08-31', '2025-07-20 14:00:00');
+
+-- Respuestas a encuestas de ejemplo
+INSERT INTO survey_responses (survey_id, user_id, response_data, responded_at) VALUES
+((SELECT id FROM surveys WHERE creator_id = (SELECT id FROM users WHERE email = 'juan.perez@example.com')), (SELECT id FROM users WHERE email = 'carlos.lopez@example.com'), '{"¿Está satisfecho con la comunicación del comité?": "Si", "¿Qué proyectos le gustaría ver en el futuro?": "Más actividades deportivas"}', '2025-07-25 09:30:00');

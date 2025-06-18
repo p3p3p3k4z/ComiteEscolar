@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 # app/config.py
 # Este archivo contiene las configuraciones de la aplicación.
 

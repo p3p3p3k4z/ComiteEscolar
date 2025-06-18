@@ -1,7 +1,9 @@
+# -*- coding: utf-8 -*-
 # app/servicios/proyecto_servicio.py
 
 from app.modelos.proyecto import Proyecto
 from app.repositorios.proyecto_repo import RepositorioProyecto
+from app.repositorios.usuario_repo import RepositorioUsuario # Importa el repositorio de usuario
 from datetime import date
 from typing import Optional, List
 
@@ -10,8 +12,9 @@ class ServicioProyecto:
     Clase de Servicio para la lógica de negocio relacionada con los Proyectos.
     Implementa el caso de uso "Agregar Proyecto".
     """
-    def __init__(self, repositorio_proyecto: RepositorioProyecto):
+    def __init__(self, repositorio_proyecto: RepositorioProyecto, repositorio_usuario: RepositorioUsuario):
         self.repositorio_proyecto = repositorio_proyecto
+        self.repositorio_usuario = repositorio_usuario # Inyecta el repositorio de usuario
 
     def agregar_proyecto(
         self,
@@ -35,10 +38,11 @@ class ServicioProyecto:
         if fecha_fin and fecha_fin < fecha_inicio:
             raise ValueError("La fecha de finalización no puede ser anterior a la fecha de inicio.")
 
-        # Aquí iría la validación de autenticación/permisos del Director,
-        # pero eso se manejaría en la capa de la API (middleware o dependencia)
-        # o en un servicio de autenticación si fuera más complejo.
-        # Por simplicidad, asumimos que la llamada a este servicio ya está autenticada.
+        # Validar si el usuario responsable existe
+        if id_usuario_responsable is not None:
+            usuario_existente = self.repositorio_usuario.obtener_por_id(id_usuario_responsable)
+            if not usuario_existente:
+                raise ValueError(f"El usuario responsable con ID {id_usuario_responsable} no existe.")
 
         # 2. Creación del objeto Proyecto
         nuevo_proyecto = Proyecto(
@@ -90,12 +94,18 @@ class ServicioProyecto:
                 raise ValueError(f"Ya existe un proyecto con el nombre '{nombre}'.")
             proyecto_a_actualizar.nombre = nombre
         if id_usuario_responsable is not None:
+            # Validar si el nuevo usuario responsable existe
+            usuario_existente = self.repositorio_usuario.obtener_por_id(id_usuario_responsable)
+            if not usuario_existente:
+                raise ValueError(f"El nuevo usuario responsable con ID {id_usuario_responsable} no existe.")
             proyecto_a_actualizar.id_usuario_responsable = id_usuario_responsable
         if fecha_inicio:
             proyecto_a_actualizar.fecha_inicio = fecha_inicio
         if fecha_fin:
-            if fecha_inicio and fecha_fin < fecha_inicio:
+            if fecha_inicio and fecha_fin < fecha_inicio: # Re-validar fechas si se actualizan ambas
                 raise ValueError("La fecha de finalización no puede ser anterior a la fecha de inicio.")
+            elif not fecha_inicio and fecha_fin < proyecto_a_actualizar.fecha_inicio: # Validar si solo se actualiza fecha_fin
+                 raise ValueError("La fecha de finalización no puede ser anterior a la fecha de inicio actual.")
             proyecto_a_actualizar.fecha_fin = fecha_fin
         if ruta_documento:
             proyecto_a_actualizar.ruta_documento = ruta_documento

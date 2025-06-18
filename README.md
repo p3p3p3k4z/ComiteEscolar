@@ -20,7 +20,7 @@
 4.  **Instala las dependencias necesarias:**
 
     ```bash
-    pip install Flask FastAPI "uvicorn[standard]" SQLAlchemy psycopg2-binary python-dotenv requests pytest httpx black isort flake8
+    pip install "Flask[async]" FastAPI "uvicorn[standard]" SQLAlchemy psycopg2-binary python-dotenv requests pytest httpx black isort flake8
     ```
     o tambien 
     
@@ -86,7 +86,7 @@ Una vez que docker compose up -d esté en ejecución, puedes acceder a pgAdmin e
 docker compose down -v # Detiene y elimina contenedores, redes y volúmenes (reinicia la DB desde cero)
 sudo rm -rf pg_data_agenda_host  ##Importante por si e cambio la base
 sleep 60 #Esto lo pongo porque el docker tarda en levanrse con docker ps se puede checar eso
-docker compose up -d   # Levanta los servicios Docker
+docker compose up -d   # Levanta los servicios Docker docker compose up -d --build
 sudo chmod -R 777 pg_data_agenda_hos
 ```
 
@@ -94,7 +94,7 @@ sudo chmod -R 777 pg_data_agenda_hos
     Crea un archivo `.env` en la raíz de tu proyecto y configura la URL de la base de datos (PostgreSQL).
 
     ```env
-    DATABASE_URL="postgresql://agenda_user:agenda_password@localhost:5432/agenda_db?schema=public"
+     DATABASE_URL=postgresql://sgcpf_user:sgcpf_password@localhost:5432/sgcpf_db
     # Otras variables de entorno como API_KEY_DE_MURF, etc.
     # API_KEY_DE_MURF="tu_clave_murf_aqui"
     # DEEPGRAM_API_KEY="tu_clave_deepgram_aqui"

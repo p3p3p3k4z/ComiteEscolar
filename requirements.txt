@@ -1,0 +1,7 @@
+Flask[async]>=2.3.0 # Asegura el soporte asíncrono
+FastAPI
+uvicorn
+SQLAlchemy>=2.0.0
+psycopg2-binary # Adaptador PostgreSQL
+python-dotenv # Para cargar variables de entorno
+pydantic # Para validación de modelos en FastAPI

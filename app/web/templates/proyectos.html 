@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SGCPF - Proyectos Escolares</title>
+    <title>SGCPF - Listado de Proyectos</title>
     <!-- Enlace a Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
@@ -16,11 +16,15 @@
 <body class="flex flex-col items-center justify-center min-h-screen p-4">
     <div class="bg-white p-8 rounded-lg shadow-xl text-center max-w-4xl mx-auto transform transition-transform duration-300 ease-in-out mb-8 w-full">
         <h1 class="text-4xl font-extrabold text-blue-600 mb-4">
-            Proyectos Escolares del SGCPF
+            Listado de Proyectos Escolares
         </h1>
         <p class="text-lg text-gray-700 mb-6">
-            {{ mensaje_personalizado if mensaje_personalizado else 'Aquí puedes ver un listado de los proyectos gestionados por el comité.' }}
+            Aquí puedes ver un listado de los proyectos gestionados por el comité.
         </p>
+
+        {% if error %}
+            <p class="text-red-600 text-center mb-4">Error: {{ error }}</p>
+        {% endif %}
 
         {% if proyectos %}
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mt-8">
@@ -42,13 +46,10 @@
         {% endif %}
 
         <div class="space-y-4 mt-8 flex flex-col sm:flex-row justify-center sm:space-y-0 sm:space-x-4">
-            <a href="/" class="inline-block bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-6 rounded-full transition-colors duration-200 shadow-md hover:shadow-lg">
-                Actualizar Proyectos
+            <a href="/" class="inline-block bg-purple-500 hover:bg-purple-700 text-white font-bold py-2 px-6 rounded-full transition-colors duration-200 shadow-md hover:shadow-lg">
+                Volver a Inicio
             </a>
-            <a href="/bienvenido" class="inline-block bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-6 rounded-full transition-colors duration-200 shadow-md hover:shadow-lg">
-                Página de Bienvenida
-            </a>
-            <!-- Aquí puedes añadir más enlaces a otras partes de tu frontend -->
+            <!-- Aquí puedes añadir un botón para agregar un nuevo proyecto si tienes el formulario -->
         </div>
     </div>
 </body>

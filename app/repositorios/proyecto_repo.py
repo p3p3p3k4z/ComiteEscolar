@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 # app/repositorios/proyecto_repo.py
 
 from sqlalchemy.orm import Session as SesionBD # Renombra para evitar conflicto

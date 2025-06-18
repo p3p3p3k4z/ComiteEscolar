@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 # app/api/proyectos.py
 
 from fastapi import APIRouter, Depends, HTTPException, status
