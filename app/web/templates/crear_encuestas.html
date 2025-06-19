@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>SGCPF - Crear Encuesta</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    let preguntaIndex = 0;
+
+    function agregarPregunta() {
+      const contenedor = document.getElementById('preguntas');
+
+      const div = document.createElement('div');
+      div.className = 'mb-4 border p-4 rounded bg-gray-50';
+      div.innerHTML = `
+        <label class="block font-semibold">Texto de la pregunta:</label>
+        <input type="text" name="pregunta_texto_${preguntaIndex}" class="w-full p-2 border rounded mb-2" required />
+
+        <label class="block font-semibold">Tipo de pregunta:</label>
+        <select name="pregunta_tipo_${preguntaIndex}" class="w-full p-2 border rounded mb-2" onchange="toggleOpciones(this, ${preguntaIndex})">
+          <option value="text">Respuesta escrita</option>
+          <option value="radio">Opción múltiple</option>
+        </select>
+
+        <div id="opciones_${preguntaIndex}" class="hidden">
+          <label class="block font-semibold">Opciones (separadas por coma):</label>
+          <input type="text" name="pregunta_opciones_${preguntaIndex}" class="w-full p-2 border rounded" />
+        </div>
+      `;
+      contenedor.appendChild(div);
+      preguntaIndex++;
+    }
+
+    function toggleOpciones(select, index) {
+      const opcionesDiv = document.getElementById(`opciones_${index}`);
+      if (select.value === 'radio') {
+        opcionesDiv.classList.remove('hidden');
+      } else {
+        opcionesDiv.classList.add('hidden');
+      }
+    }
+  </script>
+</head>
+<body class="bg-gray-100 min-h-screen p-6">
+  <div class="max-w-4xl mx-auto bg-white shadow-md rounded-lg p-6">
+    <h1 class="text-3xl font-bold text-blue-600 mb-6 text-center">Crear Encuesta</h1>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        {% for category, message in messages %}
+          <div class="mb-4 p-3 rounded {{ 'bg-green-100 text-green-800' if category == 'success' else 'bg-red-100 text-red-800' }}">
+            {{ message }}
+          </div>
+        {% endfor %}
+      {% endif %}
+    {% endwith %}
+
+    <form method="POST">
+      <label class="block mb-2 font-semibold">Nombre de la encuesta:</label>
+      <input type="text" name="nombre" class="w-full p-2 border rounded mb-4" required />
+
+      <label class="block mb-2 font-semibold">Fecha límite:</label>
+      <input type="date" name="fecha_limite" class="w-full p-2 border rounded mb-4" required />
+
+      <label class="block mb-2 font-semibold">Preguntas:</label>
+      <div id="preguntas"></div>
+
+      <button type="button" onclick="agregarPregunta()" class="mt-2 bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">
+        Agregar pregunta
+      </button>
+
+      <div class="mt-6 text-center">
+        <button type="submit" class="bg-green-500 text-white px-6 py-2 rounded hover:bg-green-600">Guardar Encuesta</button>
+      </div>
+    </form>
+  </div>
+</body>
+</html>

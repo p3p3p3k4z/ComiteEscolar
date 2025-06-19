@@ -16,7 +16,7 @@
 <body class="flex flex-col items-center justify-center min-h-screen p-4">
     <div class="bg-white p-8 rounded-lg shadow-xl text-center max-w-lg mx-auto transform transition-transform duration-300 ease-in-out">
         <h1 class="text-4xl font-extrabold text-indigo-600 mb-4">
-            Dashboard de Administrador
+            Dashboard de Director
         </h1>
         <p class="text-lg text-gray-700 mb-6">
             {{ message if message else 'Bienvenido al panel de administración.' }}
@@ -53,8 +53,22 @@
                 Configuración del Comité
             </a>
         <div class="flex flex-col items-center space-y-2">
-            <a href="#"class="inline-block bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded-lg transition duration-300 ease-in-out">
+            <a href="{{ url_for('web.crear_encuesta') }}"class="inline-block bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded-lg transition duration-300 ease-in-out">
                 Crear encuesta
+            </a>
+            <!-- Nuevo botón para Proyectos -->
+            <a href="{{ url_for('web.gestion_proyectos') }}" class="inline-block bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-8 rounded-full transition-colors duration-200 shadow-md hover:shadow-lg">
+                Gestionar Proyectos
+            </a>
+            <!-- Otros botones para el dashboard de administrador -->
+            <a href="#" class="inline-block bg-gray-500 hover:bg-gray-700 text-white font-bold py-3 px-8 rounded-full transition-colors duration-200 shadow-md hover:shadow-lg">
+                Gestión de Usuarios
+            </a>
+            <a href="#" class="inline-block bg-gray-500 hover:bg-gray-700 text-white font-bold py-3 px-8 rounded-full transition-colors duration-200 shadow-md hover:shadow-lg">
+                Reportes Financieros
+            </a>
+            <a href="#" class="inline-block bg-gray-500 hover:bg-gray-700 text-white font-bold py-3 px-8 rounded-full transition-colors duration-200 shadow-md hover:shadow-lg">
+                Configuración del Comité
             </a>
             <a href="{{ url_for('web.pagina_bienvenida') }}"class="inline-block bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded-lg transition duration-300 ease-in-out">
                 Ver contenido

@@ -3,9 +3,11 @@
 
 import json
 from os import abort
+from sqlalchemy.sql import text
 from urllib import response
 from flask import Blueprint, render_template, request, redirect, session, url_for, flash, jsonify
 from datetime import date , datetime
+from functools import wraps
 
 from app import db
 from app.modelos import usuario
@@ -15,14 +17,15 @@ from app.servicios.usuario_servicio import ServicioUsuario
 from app.repositorios.usuario_repo import RepositorioUsuario
 from app.servicios.encuesta_servicio import ServicioEncuesta
 from app.repositorios.encuesta_repo import RepositorioEncuesta
-from app.db import Session as DBSession
+from app.db import Session as DBSession 
 
-bp_web = Blueprint('web', __name__)
+bp_web = Blueprint('web', __name__, url_prefix='/')
 
 @bp_web.route('/')
 def pagina_principal():
     mensaje_bienvenida = "Bienvenido al Sistema de Gestión del Comité de Padres de Familia (SGCPF)."
     return render_template('login/templates/index.html', mensaje=mensaje_bienvenida)
+
 
 @bp_web.route('/login', methods=['GET', 'POST'])
 def login():
@@ -37,6 +40,8 @@ def login():
             password = request.form['password']
             usuario_autenticado = servicio_usuario.validar_credenciales(email, password)
             if usuario_autenticado:
+                session['usuario_id'] = usuario_autenticado.id
+                session['usuario_rol']= usuario_autenticado.rol
                 flash(f'¡Bienvenido, {usuario_autenticado.nombre}!', 'success')
 
                 if usuario_autenticado.rol == 'PadreDeFamilia':
@@ -325,42 +330,148 @@ def ver_encuesta(id):
 
     return render_template('web/templates/ver_encuesta.html',encuesta=encuesta,preguntas=preguntas,error=error_mensaje)
 
-from app.modelos.respuestas import Respuesta 
 @bp_web.route('/guardar_respuestas', methods=['POST'])
 def guardar_respuestas():
     data = request.form
     survey_id = data.get('survey_id')
-    user_id = session.get('usuario_id')  # 
+    user_id = session.get('usuario_id')
 
-    # Recolectar dinámicamente las respuestas
-    respuestas = {}
-    for key in data:
-        if key.startswith('respuesta_'):
-            respuestas[key] = data.get(key)
-
-    if not survey_id or not user_id or not respuestas:
+    if not survey_id or not user_id:
         flash("Faltan datos para guardar la respuesta", "error")
         return redirect(url_for('web.encuestas'))
 
     try:
-        respuestas_json = json.dumps(respuestas)
+        # Recuperar preguntas de la encuesta para obtener texto completo
+        db = DBSession()
+        enc = db.execute(text("SELECT questions FROM surveys WHERE id = :id"), {"id": survey_id}).fetchone()
+        if not enc:
+            flash("Encuesta no encontrada", "error")
+            return redirect(url_for('web.encuestas'))
 
-        nueva_respuesta = Respuesta(
-            survey_id=survey_id,
-            user_id=user_id,
-            response_data=respuestas_json
-        )
+        preguntas = json.loads(enc[0])  # el campo questions
 
-        db.session.add(nueva_respuesta)
-        db.session.commit()
+        # Armar diccionario de respuestas legibles
+        respuestas = {}
+        for i, pregunta in enumerate(preguntas, start=1):
+            key = f'respuesta_{i}'
+            valor = data.get(key)
+            if valor:
+                respuestas[pregunta['question']] = valor
+
+        if not respuestas:
+            flash("No se respondieron preguntas", "error")
+            return redirect(url_for('web.encuestas'))
+
+        respuestas_json = json.dumps(respuestas, ensure_ascii=False)
+
+        # Insertar en base
+        insert_query = text("""
+            INSERT INTO survey_responses (survey_id, user_id, response_data, responded_at)
+            VALUES (:survey_id, :user_id, :response_data, :responded_at)
+        """)
+
+        db.execute(insert_query, {
+            'survey_id': survey_id,
+            'user_id': user_id,
+            'response_data': respuestas_json,
+            'responded_at': datetime.now()
+        })
+        db.commit()
 
         flash("Respuestas guardadas correctamente", "success")
         return redirect(url_for('web.encuestas'))
 
     except Exception as e:
-        db.session.rollback()
-        flash(f"Error al guardar respuestas: {e}", "error")
+        db.rollback()
+        print("Error al guardar respuestas:", e)
+        flash("Error al guardar respuestas", "error")
         return redirect(url_for('web.encuestas'))
+
+    finally:
+        db.close()
+
+
+@bp_web.route('/crear_encuesta', methods=['GET', 'POST'])
+def crear_encuesta():
+    if request.method == 'POST':
+        nombre = request.form.get('nombre')
+        fecha_limite = request.form.get('fecha_limite')
+        usuario_id = session.get('usuario_id')
+
+        if not nombre or not fecha_limite:
+            flash("Todos los campos son obligatorios", "error")
+            return redirect('/crear_encuesta')
+
+        # Construir preguntas dinámicamente
+        preguntas = []
+        i = 0
+        while True:
+            texto = request.form.get(f'pregunta_texto_{i}')
+            tipo = request.form.get(f'pregunta_tipo_{i}')
+            if not texto or not tipo:
+                break  # Ya no hay más preguntas
+
+            pregunta = {
+                "question": texto,
+                "type": tipo
+            }
+
+            if tipo == "radio":
+                opciones_raw = request.form.get(f'pregunta_opciones_{i}', '')
+                opciones = [o.strip() for o in opciones_raw.split(',') if o.strip()]
+                pregunta["options"] = opciones
+
+            preguntas.append(pregunta)
+            i += 1
+
+        if not preguntas:
+            flash("Debes agregar al menos una pregunta.", "error")
+            return redirect('/crear_encuesta')
+
+        preguntas_json = json.dumps(preguntas, ensure_ascii=False)
+
+        try:
+            db = DBSession()
+            query = text("""
+                INSERT INTO surveys (nombre, creator_id, questions, deadline_date, created_at)
+                VALUES (:nombre, :creator_id, :questions, :deadline_date, :created_at)
+            """)
+            db.execute(query, {
+                'nombre': nombre,
+                'creator_id': usuario_id,
+                'questions': preguntas_json,
+                'deadline_date': fecha_limite,
+                'created_at': datetime.now()
+            })
+            db.commit()
+            flash("Encuesta creada exitosamente", "success")
+            return redirect('/crear_encuesta')
+        except Exception as e:
+            db.rollback()
+            print("Error al guardar encuesta:", e)
+            flash("Hubo un error al guardar la encuesta.", "error")
+        finally:
+            db.close()
+
+    return render_template('web/templates/crear_encuestas.html')
+
+@bp_web.route('/validar_usuario')
+def validar_usuario():
+    usuario_rol = session.get('usuario_rol')
+    if usuario_rol == 'PadreDeFamilia':
+        return redirect(url_for('web.dashboard_padre'))
+    elif usuario_rol == 'Director':
+        return redirect(url_for('web.dashboard_director'))
+    elif usuario_rol== 'Secretario':
+        return redirect(url_for('web.dashboard_secretario'))
+    elif usuario_rol == 'Administrador':
+        return redirect(url_for('web.dashboard_admin'))
+    elif usuario_rol == 'Tesorero':
+        return redirect(url_for('web.dashboard_tesorero'))
+    else:
+        flash("Rol de usuario no reconocido. Redirigiendo a la página principal.", "info")
+        return redirect(url_for('web.pagina_principal'))
+
 
 @bp_web.route('/bienvenido')
 def pagina_bienvenida():
