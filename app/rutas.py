@@ -8,6 +8,8 @@ from app.servicios.proyecto_servicio import ServicioProyecto
 from app.repositorios.proyecto_repo import RepositorioProyecto
 from app.servicios.usuario_servicio import ServicioUsuario
 from app.repositorios.usuario_repo import RepositorioUsuario
+from app.repositorios.comite_repo import RepositorioComite
+from app.servicios.comite_servicio import ServicioComite
 from app.db import Session as DBSession
 from app.web import crear_app_web
 
@@ -247,7 +249,37 @@ async def gestion_proyectos():
                            usuarios=usuarios_data,
                            error=error_mensaje,
                            success=success_message)
+@bp_web.route('/admin/comites', methods=['GET', 'POST'])
+def gestion_comites():
+    db_session = DBSession()
+    try:
+        repo_comite = RepositorioComite(db_session)
+        servicio_comite = ServicioComite(repo_comite)
 
+        if request.method == 'POST':
+            operacion = request.form.get('operacion')
+            
+            if operacion == 'crear':
+                nombre = request.form['nombre']
+                periodo = request.form['periodo']
+                servicio_comite.crear_comite(nombre, periodo)
+                flash('Comité creado exitosamente', 'success')
+
+            elif operacion == 'editar':
+                id_comite = int(request.form['id_comite'])
+                nombre = request.form.get('nombre')
+                status = request.form.get('status')
+                servicio_comite.actualizar_comite(id_comite, nombre, status)
+                flash('Comité actualizado', 'success')
+
+        comites = repo_comite.obtener_todos()
+        return render_template('templates/admin/comites.html', comites=comites)
+
+    except Exception as e:
+        flash(f'Error: {str(e)}', 'danger')
+        return redirect(url_for('web.gestion_comites'))
+    finally:
+        db_session.close()
 
 @bp_web.route('/bienvenido')
 def pagina_bienvenida():
