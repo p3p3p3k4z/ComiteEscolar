@@ -19,6 +19,10 @@ class RepositorioUsuario:
     def obtener_por_email(self, email: str) -> Optional[Usuario]:
         """Obtiene un usuario por su email."""
         return self.db.query(Usuario).filter(Usuario.email == email).first()
+    
+    def obtener_por_name(self, name: str) -> Optional[Usuario]:
+        """Obtiene un usuario por su name."""
+        return self.db.query(Usuario).filter(Usuario.email == name).first()
 
     def guardar(self, usuario: Usuario) -> Usuario:
         """Guarda un nuevo usuario en la base de datos."""
