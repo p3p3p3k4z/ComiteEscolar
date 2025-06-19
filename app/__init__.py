@@ -5,4 +5,4 @@
 
 # Importa los modelos aquí para que Base.metadata.create_all() los detecte.
 # No se inicializa la DB aquí, solo se asegura que los modelos sean conocidos.
-from app.modelos import proyecto, usuario
+from app.modelos import proyecto, usuario, reunion

@@ -7,6 +7,11 @@ from app.repositorios.proyecto_repo import RepositorioProyecto
 from app.servicios.proyecto_servicio import ServicioProyecto
 from app.repositorios.usuario_repo import RepositorioUsuario # Importa el RepositorioUsuario
 from app.servicios.usuario_servicio import ServicioUsuario # Importa el ServicioUsuario
+from app.repositorios.reunion_repo import (
+    RepositorioReunion, RepositorioMiembroReunion, 
+    RepositorioNotificacion, RepositorioActa
+)
+from app.servicios.reunion_servicio import ServicioReunion
 from fastapi import Depends
 
 
@@ -33,6 +38,30 @@ def obtener_repositorio_usuario(db: SesionBD = Depends(obtener_bd)) -> Repositor
     """
     return RepositorioUsuario(db)
 
+def obtener_repositorio_reunion(db: SesionBD = Depends(obtener_bd)) -> RepositorioReunion:
+    """
+    Provee una instancia de RepositorioReunion.
+    """
+    return RepositorioReunion(db)
+
+def obtener_repositorio_miembro_reunion(db: SesionBD = Depends(obtener_bd)) -> RepositorioMiembroReunion:
+    """
+    Provee una instancia de RepositorioMiembroReunion.
+    """
+    return RepositorioMiembroReunion(db)
+
+def obtener_repositorio_notificacion(db: SesionBD = Depends(obtener_bd)) -> RepositorioNotificacion:
+    """
+    Provee una instancia de RepositorioNotificacion.
+    """
+    return RepositorioNotificacion(db)
+
+def obtener_repositorio_acta(db: SesionBD = Depends(obtener_bd)) -> RepositorioActa:
+    """
+    Provee una instancia de RepositorioActa.
+    """
+    return RepositorioActa(db)
+
 def obtener_servicio_proyecto(
     repositorio_proyecto: RepositorioProyecto = Depends(obtener_repositorio_proyecto),
     repositorio_usuario: RepositorioUsuario = Depends(obtener_repositorio_usuario) # Inyecta también el repositorio de usuario
@@ -49,3 +78,15 @@ def obtener_servicio_usuario(
     Provee una instancia de ServicioUsuario.
     """
     return ServicioUsuario(repositorio_usuario)
+
+def obtener_servicio_reunion(
+    repo_reunion: RepositorioReunion = Depends(obtener_repositorio_reunion),
+    repo_miembro_reunion: RepositorioMiembroReunion = Depends(obtener_repositorio_miembro_reunion),
+    repo_notificacion: RepositorioNotificacion = Depends(obtener_repositorio_notificacion),
+    repo_acta: RepositorioActa = Depends(obtener_repositorio_acta),
+    repo_usuario: RepositorioUsuario = Depends(obtener_repositorio_usuario)
+) -> ServicioReunion:
+    """
+    Provee una instancia de ServicioReunion.
+    """
+    return ServicioReunion(repo_reunion, repo_miembro_reunion, repo_notificacion, repo_acta, repo_usuario)

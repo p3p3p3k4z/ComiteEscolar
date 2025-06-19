@@ -273,3 +273,17 @@ def dashboard_tesorero():
 @bp_web.route('/dashboard/director')
 def dashboard_director():
     return render_template('login/templates/sesion_director.html', message="Bienvenido, Director!")
+
+@bp_web.route('/debug-rutas')
+def debug_rutas():
+    """
+    Ruta de debug para verificar que las rutas se están registrando correctamente.
+    """
+    return {"mensaje": "Las rutas web están funcionando correctamente", "rutas_disponibles": ["/", "/proyectos", "/reuniones", "/bienvenido"]}
+
+@bp_web.route('/reuniones')
+def pagina_reuniones():
+    """
+    Ruta para la página de gestión de reuniones.
+    """
+    return render_template('web/templates/reuniones.html')
