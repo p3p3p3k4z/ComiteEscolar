@@ -46,10 +46,9 @@
         {% endif %}
 
         <div class="space-y-4 mt-8 flex flex-col sm:flex-row justify-center sm:space-y-0 sm:space-x-4">
-            <a href="/" class="inline-block bg-purple-500 hover:bg-purple-700 text-white font-bold py-2 px-6 rounded-full transition-colors duration-200 shadow-md hover:shadow-lg">
+            <a href="{{ url_for('web.pagina_bienvenida') }}" class="inline-block bg-purple-500 hover:bg-purple-700 text-white font-bold py-2 px-6 rounded-full transition-colors duration-200 shadow-md hover:shadow-lg">
                 Volver a Inicio
             </a>
-            <!-- Aquí puedes añadir un botón para agregar un nuevo proyecto si tienes el formulario -->
         </div>
     </div>
 </body>
