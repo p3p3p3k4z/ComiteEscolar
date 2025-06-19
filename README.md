@@ -83,11 +83,12 @@ Una vez que docker compose up -d esté en ejecución, puedes acceder a pgAdmin e
 #### Reiniciar proyecto o Iniciar
 
 ```bash
-docker compose down -v # Detiene y elimina contenedores, redes y volúmenes (reinicia la DB desde cero)
-sudo rm -rf pg_data_agenda_host  ##Importante por si e cambio la base
+docker-compose build # Detiene y elimina contenedores, redes y volúmenes (reinicia la DB desde cero)
+sudo rm -rf pg_data_sgcpf_host  ##Importante por si e cambio la base
 sleep 60 #Esto lo pongo porque el docker tarda en levanrse con docker ps se puede checar eso
 docker compose up -d   # Levanta los servicios Docker docker compose up -d --build
-sudo chmod -R 777 pg_data_agenda_hos
+sudo chmod -R 777 pg_data_sgcpf_host
+
 ```
 
 **Variables de Entorno:**

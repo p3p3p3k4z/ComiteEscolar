@@ -17,7 +17,7 @@ class ServicioUsuario:
         nombre: str,
         apellido: str,
         email: str,
-        password_hash: str, # En un entorno real, manejarías hashing de contraseñas aquí
+        password_hash: str, 
         rol: str
     ) -> Usuario:
         """
@@ -86,3 +86,21 @@ class ServicioUsuario:
         if not usuario_a_eliminar:
             raise ValueError(f"Usuario con ID {id_usuario} no encontrado.")
         self.repositorio_usuario.eliminar(usuario_a_eliminar)
+
+     # --- FUNCIÓN DE VALIDACIÓN ---
+    def validar_credenciales(self, email_ingresado: str, password_ingresada: str) -> Optional[Usuario]:
+        """
+        Valida las credenciales de un usuario (email y contraseña) SIN HASHEO.
+        Regresa el objeto Usuario si la validación es exitosa, de lo contrario None.
+        """
+        usuario = self.repositorio_usuario.obtener_por_email(email_ingresado)
+
+        if usuario:
+            if hasattr(usuario, 'password_hash') and usuario.password_hash == password_ingresada:
+                return usuario
+            else:
+                print("Contraseña no coincide.")
+                return None
+        else:
+            print(f"Usuario con email '{email_ingresado}' no encontrado.")
+            return None
