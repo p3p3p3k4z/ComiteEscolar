@@ -20,7 +20,7 @@ def crear_app_web():
     # app.config.from_object(Configuracion)
 
     # Importa y registra las rutas de la aplicación web
-    from . import rutas
+    from app import rutas
     app.register_blueprint(rutas.bp_web)
 
     return app
