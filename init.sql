@@ -124,12 +124,14 @@ CREATE TABLE IF NOT EXISTS event_notifications (
 -- Crear la tabla de Encuestas
 CREATE TABLE IF NOT EXISTS surveys (
     id SERIAL PRIMARY KEY,
+    nombre VARCHAR(255) NOT NULL, -- 🆕 Título o nombre de la encuesta
     creator_id INTEGER, -- Quién creó la encuesta
-    questions TEXT NOT NULL, -- Para simplificar, guarda las preguntas como texto JSON o un formato similar. Considera una tabla 'survey_questions' y 'survey_options' para un diseño más normalizado.
+    questions TEXT NOT NULL, -- Preguntas en formato JSON o similar
     deadline_date DATE,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (creator_id) REFERENCES users (id) ON DELETE SET NULL
 );
+
 
 -- Tabla para respuestas de Encuestas (muchos a muchos entre users y surveys)
 CREATE TABLE IF NOT EXISTS survey_responses (
@@ -227,8 +229,8 @@ INSERT INTO proposals (type, content, submission_date, submitter_id) VALUES
 ('Queja', 'Problemas con la iluminación en el pasillo principal.', '2025-07-08', (SELECT id FROM users WHERE email = 'carlos.lopez@example.com'));
 
 -- Encuestas de ejemplo
-INSERT INTO surveys (creator_id, questions, deadline_date, created_at) VALUES
-((SELECT id FROM users WHERE email = 'juan.perez@example.com'), '[{"question": "¿Está satisfecho con la comunicación del comité?", "type": "radio", "options": ["Si", "No"]}, {"question": "¿Qué proyectos le gustaría ver en el futuro?", "type": "text"}]', '2025-08-31', '2025-07-20 14:00:00');
+INSERT INTO surveys (nombre, creator_id, questions, deadline_date, created_at)VALUES ('Encuesta de comunicación y proyectos',
+(SELECT id FROM users WHERE email = 'juan.perez@example.com'),'[{"question": "¿Está satisfecho con la comunicación del comité?", "type": "radio", "options": ["Si", "No"]}, {"question": "¿Qué proyectos le gustaría ver en el futuro?", "type": "text"}]','2025-08-31','2025-07-20 14:00:00');
 
 -- Respuestas a encuestas de ejemplo
 INSERT INTO survey_responses (survey_id, user_id, response_data, responded_at) VALUES

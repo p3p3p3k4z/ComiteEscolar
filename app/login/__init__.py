@@ -18,7 +18,7 @@ def acceso_sistema():
     # Puedes cargar configuraciones aquí si las necesitas
     # from app.config import Configuracion
     # app.config.from_object(Configuracion)
-    app.config['SECRET_KEY'] = '1338ba1c08fefdffb6d0734580576f7c9ce49aefc914770fadcd922784c81620'
+    app.config['SECRET_KEY'] = '26d078ca7a9e48c8d6c36590023ee069b306855530a78312e9d21455552cf337'
 
     # Importa y registra las rutas de la aplicación web
     from app import rutas

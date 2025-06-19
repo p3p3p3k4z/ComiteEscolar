@@ -25,6 +25,7 @@ class Usuario(Base):
 
     # Relación inversa con la tabla de proyectos, para acceder a los proyectos de un usuario
     proyectos = relationship("Proyecto", back_populates="usuario_responsable")
+    encuestas = relationship("Encuesta", back_populates="creador", lazy='joined')
 
     def __repr__(self):
         return f"<Usuario(id={self.id}, nombre='{self.nombre} {self.apellido}', rol='{self.rol}')>"

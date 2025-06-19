@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>{{ encuesta.nombre }} - Contestar Encuesta</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="min-h-screen bg-gray-100 p-6">
+    <div class="max-w-3xl mx-auto bg-white p-8 rounded-lg shadow-md">
+        <h1 class="text-2xl font-bold text-blue-600 mb-4">
+            {{ encuesta.nombre }}
+        </h1>
+
+        {% if error %}
+            <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
+                <strong class="font-bold">Error:</strong>
+                <span class="block sm:inline">{{ error }}</span>
+            </div>
+        {% endif %}
+
+        <form action="{{ url_for('web.guardar_respuestas') }}" method="post">
+            <input type="hidden" name="survey_id" value="{{ encuesta.id }}">
+            {% for pregunta in preguntas %}
+                {% set i_pregunta = loop.index %}
+                <div class="mb-6">
+                    <label class="block text-gray-800 font-medium mb-2">
+                        {{ i_pregunta }}. {{ pregunta.question }}
+                    </label>
+
+                    {% if pregunta.type == 'radio' %}
+                        {% for opcion in pregunta.options %}
+                            <div class="flex items-center mb-2">
+                                <input type="radio"
+                                       name="respuesta_{{ i_pregunta }}"
+                                       value="{{ opcion }}"
+                                       id="opcion_{{ i_pregunta }}_{{ loop.index }}"
+                                       class="mr-2 text-blue-600 focus:ring-blue-500">
+                                <label for="opcion_{{ i_pregunta }}_{{ loop.index }}">
+                                    {{ opcion }}
+                                </label>
+                            </div>
+                        {% endfor %}
+                    {% elif pregunta.type == 'text' %}
+                        <textarea name="respuesta_{{ i_pregunta }}"
+                                  rows="4"
+                                  class="w-full border rounded p-2 focus:outline-none focus:ring-2 focus:ring-blue-400"
+                                  placeholder="Escribe tu respuesta aquí..."></textarea>
+                    {% else %}
+                        <p class="text-red-600 text-sm">Tipo de pregunta desconocido.</p>
+                    {% endif %}
+                </div>
+            {% endfor %}
+
+            <div class="text-center">
+                <button type="submit"
+                        class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-6 rounded transition">
+                    Enviar Respuestas
+                </button>
+            </div>
+        </form>
+    </div>
+</body>
+</html>

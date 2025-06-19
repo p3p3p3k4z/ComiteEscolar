@@ -1,15 +1,21 @@
 # -*- coding: utf-8 -*-
 # app/rutas.py
 
-from flask import Blueprint, render_template, request, redirect, session, url_for, flash
+import json
+from os import abort
+from urllib import response
+from flask import Blueprint, render_template, request, redirect, session, url_for, flash, jsonify
 from datetime import date , datetime
 
+from app import db
+from app.modelos import usuario
 from app.servicios.proyecto_servicio import ServicioProyecto
 from app.repositorios.proyecto_repo import RepositorioProyecto
 from app.servicios.usuario_servicio import ServicioUsuario
 from app.repositorios.usuario_repo import RepositorioUsuario
+from app.servicios.encuesta_servicio import ServicioEncuesta
+from app.repositorios.encuesta_repo import RepositorioEncuesta
 from app.db import Session as DBSession
-from app.web import crear_app_web
 
 bp_web = Blueprint('web', __name__)
 
@@ -30,7 +36,6 @@ def login():
             email = request.form['email']
             password = request.form['password']
             usuario_autenticado = servicio_usuario.validar_credenciales(email, password)
-
             if usuario_autenticado:
                 flash(f'¡Bienvenido, {usuario_autenticado.nombre}!', 'success')
 
@@ -248,6 +253,114 @@ async def gestion_proyectos():
                            error=error_mensaje,
                            success=success_message)
 
+
+
+@bp_web.route('/encuestas')
+async def encuestas():
+    encuestas_para_html = []
+    error_mensaje = None
+    db_session = None
+
+    try:
+        db_session = DBSession()
+
+        repo_encuesta = RepositorioEncuesta(db_session)
+        repo_usuario = RepositorioUsuario(db_session)
+        servicio_encuesta = ServicioEncuesta(repo_encuesta)
+
+        encuestas_obtenidas = servicio_encuesta.obtener_todas()
+
+        for encuesta in encuestas_obtenidas:
+            creador_nombre = "Desconocido"
+            if encuesta.creador:
+                creador_nombre = f"{encuesta.creador.nombre} {encuesta.creador.apellido}"
+
+            try:
+                preguntas_lista = json.loads(encuesta.questions)
+                preguntas_texto = "\n".join(f"- {p['question']}" for p in preguntas_lista)
+            except Exception as e:
+                preguntas_texto = "Error al leer preguntas"
+
+            encuestas_para_html.append({
+                "id": encuesta.id,
+                "nombre":encuesta.nombre,
+                "preguntas": preguntas_texto,
+                "fecha_limite": encuesta.deadline_date,
+                "fecha_creacion": encuesta.created_at,
+                "creador": creador_nombre
+            })
+
+    except Exception as e:
+        error_mensaje = f"No se pudieron cargar las encuestas: {e}"
+        print(f"Error al cargar encuestas en Flask: {e}")
+
+    finally:
+        if db_session:
+            db_session.close()
+
+    return render_template('web/templates/encuestas.html', encuestas=encuestas_para_html, error=error_mensaje)
+
+@bp_web.route('/encuestas/<int:id>')
+def ver_encuesta(id):
+    db_session = DBSession()
+    encuesta = None
+    error_mensaje = None
+    preguntas = []
+
+    try:
+        repo_encuesta = RepositorioEncuesta(db_session)
+        encuesta = repo_encuesta.obtener_por_id(id)
+
+        if not encuesta:
+            error_mensaje = "Encuesta no encontrada"
+        else:
+            # Si preguntas están en formato JSON serializado, las convertimos a lista/diccionario
+            preguntas = json.loads(encuesta.questions)
+
+    except Exception as e:
+        error_mensaje = f"No se pudo cargar la encuesta: {e}"
+
+    finally:
+        db_session.close()
+
+    return render_template('web/templates/ver_encuesta.html',encuesta=encuesta,preguntas=preguntas,error=error_mensaje)
+
+from app.modelos.respuestas import Respuesta 
+@bp_web.route('/guardar_respuestas', methods=['POST'])
+def guardar_respuestas():
+    data = request.form
+    survey_id = data.get('survey_id')
+    user_id = session.get('usuario_id')  # 
+
+    # Recolectar dinámicamente las respuestas
+    respuestas = {}
+    for key in data:
+        if key.startswith('respuesta_'):
+            respuestas[key] = data.get(key)
+
+    if not survey_id or not user_id or not respuestas:
+        flash("Faltan datos para guardar la respuesta", "error")
+        return redirect(url_for('web.encuestas'))
+
+    try:
+        respuestas_json = json.dumps(respuestas)
+
+        nueva_respuesta = Respuesta(
+            survey_id=survey_id,
+            user_id=user_id,
+            response_data=respuestas_json
+        )
+
+        db.session.add(nueva_respuesta)
+        db.session.commit()
+
+        flash("Respuestas guardadas correctamente", "success")
+        return redirect(url_for('web.encuestas'))
+
+    except Exception as e:
+        db.session.rollback()
+        flash(f"Error al guardar respuestas: {e}", "error")
+        return redirect(url_for('web.encuestas'))
 
 @bp_web.route('/bienvenido')
 def pagina_bienvenida():

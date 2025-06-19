@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>SGCPF - Encuestas</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 min-h-screen p-6">
+    <div class="max-w-4xl mx-auto bg-white shadow-md rounded-lg p-6">
+        <h1 class="text-3xl font-bold text-blue-600 mb-6 text-center">Encuestas</h1>
+
+        {% if error %}
+            <div class="bg-red-100 text-red-700 border border-red-400 px-4 py-3 rounded mb-4">
+                <strong class="font-bold">Error:</strong> {{ error }}
+            </div>
+        {% endif %}
+
+        {% if encuestas %}
+            <ul class="space-y-4">
+                {% for encuesta in encuestas %}
+                    <li class="bg-gray-100 p-4 rounded shadow hover:shadow-md transition">
+                        <a href="{{ url_for('web.ver_encuesta', id=encuesta.id) }}" class="text-lg font-semibold text-blue-700 hover:underline">
+                            {{ encuesta.nombre }}
+                        </a>
+                    </li>
+                {% endfor %}
+            </ul>
+        {% else %}
+            <p class="text-gray-600 text-center">No hay encuestas disponibles.</p>
+        {% endif %}
+    </div>
+</body>
+</html>
