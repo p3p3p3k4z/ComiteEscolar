@@ -1,5 +1,29 @@
 # Comite Escolar
 
+###Importante!!!
+crear un .env
+
+### Docker
+En caso de reiniciar, si es la primera vez ignorar las primeras 2 lineas
+
+```bash
+docker compose down -v # Detiene y elimina contenedores, redes y volúmenes (reinicia la DB desde cero)
+sudo rm -rf pg_data_sgcpf_host/   ##Importante por si e cambio la base
+
+docker compose up -d --build   # Levanta los servicios Docker docker compose up -d --build
+sleep 60 #Esto lo pongo porque el docker tarda en levanrse con docker ps se puede checar eso
+sudo chmod -R 777 pg_data_sgcpf_host/ *
+
+```
+Una vez levantada la base ya puedes continuar ...
+
+**Variables de Entorno:**
+    Crea un archivo `.env` en la raíz de tu proyecto y configura la URL de la base de datos (PostgreSQL).
+
+```bash
+DATABASE_URL=postgresql://sgcpf_user:sgcpf_password@localhost:5432/sgcpf_db
+```
+
 ## Cómo ejecutar la aplicación
 
 ### Entorno Virtual 
@@ -67,39 +91,34 @@
 
 Una vez que docker compose up -d esté en ejecución, puedes acceder a pgAdmin en http://localhost:8085 
 
-    Abre tu navegador y ve a la dirección de pgAdmin.
-    Haz clic en "Add New Server" en pgAdmin.
-    Pestaña "General":
-        Name: Agenda DB (o el nombre que prefieras).
-    Pestaña "Connection":
-        Host name/address: db (pgAdmin está en la misma red Docker que la DB, por lo que se refieren por el nombre del servicio).
-        Port: 5432
-        Maintenance database: agenda_db
-        Username: agenda_user
-        Password: agenda_password
-        Marca "Save password?".
-    Haz clic en "Save".
+Para conectar PgAdmin a tu base de datos PostgreSQL del proyecto SGCPF, sigue estos pasos:
 
-#### Reiniciar proyecto o Iniciar
+    Asegúrate de que PgAdmin esté corriendo (si lo tienes en Docker Compose, verifica que su contenedor esté levantado junto con el de la base de datos).
 
-```bash
-docker compose down -v # Detiene y elimina contenedores, redes y volúmenes (reinicia la DB desde cero)
-sudo rm -rf pg_data_agenda_host  ##Importante por si e cambio la base
-sleep 60 #Esto lo pongo porque el docker tarda en levanrse con docker ps se puede checar eso
-docker compose up -d   # Levanta los servicios Docker docker compose up -d --build
-sudo chmod -R 777 pg_data_agenda_hos
-```
+    Abre tu navegador web y ve a la dirección de PgAdmin (comúnmente http://localhost:8080 si lo tienes en Docker Compose con ese mapeo de puerto, o el puerto que hayas configurado).
 
-**Variables de Entorno:**
-    Crea un archivo `.env` en la raíz de tu proyecto y configura la URL de la base de datos (PostgreSQL).
+    Una vez en la interfaz de PgAdmin, haz clic en "Add New Server" (o "Registrar nuevo servidor" / "Agregar nuevo servidor").
 
-    ```env
-     DATABASE_URL=postgresql://sgcpf_user:sgcpf_password@localhost:5432/sgcpf_db
-    # Otras variables de entorno como API_KEY_DE_MURF, etc.
-    # API_KEY_DE_MURF="tu_clave_murf_aqui"
-    # DEEPGRAM_API_KEY="tu_clave_deepgram_aqui"
-    ```
+    En la pestaña "General":
 
+        Name: SGCPF Database (o el nombre que prefieras para identificar esta conexión, por ejemplo, Comite Escolar DB).
+
+    En la pestaña "Connection":
+
+        Host name/address: sgcpf_db
+        
+        Port: 5432 (Este es el puerto por defecto de PostgreSQL).
+
+        Maintenance database: sgcpf_db (Este es el nombre de la base de datos a la que te quieres conectar, según tu init.sql).
+
+        Username: sgcpf_user (Tu usuario de base de datos definido en docker-compose.yml).
+
+        Password: sgcpf_password (Tu contraseña de base de datos definida en docker-compose.yml).
+
+        Marca "Save password?" para no tener que introducirla cada vez.
+
+    Haz clic en "Save" (o "Guardar").
+    
 --
 
 ## Propuesta de estructura del proyecto
