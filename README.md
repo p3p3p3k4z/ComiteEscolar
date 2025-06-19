@@ -95,19 +95,6 @@ Para conectar PgAdmin a tu base de datos PostgreSQL del proyecto SGCPF, sigue es
 
     Asegúrate de que PgAdmin esté corriendo (si lo tienes en Docker Compose, verifica que su contenedor esté levantado junto con el de la base de datos).
 
-<<<<<<< HEAD
-    Abre tu navegador web y ve a la dirección de PgAdmin (comúnmente http://localhost:8080 si lo tienes en Docker Compose con ese mapeo de puerto, o el puerto que hayas configurado).
-=======
-```bash
-docker-compose build # Detiene y elimina contenedores, redes y volúmenes (reinicia la DB desde cero)
-sudo rm -rf pg_data_sgcpf_host  ##Importante por si e cambio la base
-sleep 60 #Esto lo pongo porque el docker tarda en levanrse con docker ps se puede checar eso
-docker compose up -d   # Levanta los servicios Docker docker compose up -d --build
-sudo chmod -R 777 pg_data_sgcpf_host
-
-```
->>>>>>> origin/Luis
-
     Una vez en la interfaz de PgAdmin, haz clic en "Add New Server" (o "Registrar nuevo servidor" / "Agregar nuevo servidor").
 
     En la pestaña "General":
