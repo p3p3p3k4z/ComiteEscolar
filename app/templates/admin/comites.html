@@ -1,0 +1,59 @@
+<!-- templates/admin/comites.html -->
+{% extends "login/templates/sesion_admin.html" %}  <!-- Ajusta según tu estructura -->
+
+{% block content %}
+<div class="container">
+    <h2>Gestión de Comités</h2>
+    
+    <!-- Formulario para Crear/Editar -->
+    <form method="POST" class="mb-4">
+        <input type="hidden" name="operacion" value="crear">
+        <div class="row">
+            <div class="col-md-4">
+                <input type="text" name="nombre" class="form-control" placeholder="Nombre" required>
+            </div>
+            <div class="col-md-3">
+                <input type="text" name="periodo" class="form-control" placeholder="Periodo (ej: 2024-2025)" required>
+            </div>
+            <div class="col-md-2">
+                <button type="submit" class="btn btn-primary">Crear Comité</button>
+            </div>
+        </div>
+    </form>
+
+    <!-- Lista de Comités -->
+    <table class="table">
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Nombre</th>
+                <th>Periodo</th>
+                <th>Estado</th>
+                <th>Acciones</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for comite in comites %}
+            <tr>
+                <td>{{ comite.id }}</td>
+                <td>{{ comite.name }}</td>
+                <td>{{ comite.period }}</td>
+                <td>{{ comite.status }}</td>
+                <td>
+                    <form method="POST" style="display:inline;">
+                        <input type="hidden" name="operacion" value="editar">
+                        <input type="hidden" name="id_comite" value="{{ comite.id }}">
+                        <input type="text" name="nombre" value="{{ comite.name }}" class="form-control-sm">
+                        <select name="status" class="form-control-sm">
+                            <option value="activo" {% if comite.status == 'activo' %}selected{% endif %}>Activo</option>
+                            <option value="inactivo" {% if comite.status == 'inactivo' %}selected{% endif %}>Inactivo</option>
+                        </select>
+                        <button type="submit" class="btn btn-sm btn-warning">Actualizar</button>
+                    </form>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}
