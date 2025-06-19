@@ -1,0 +1,470 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SGCPF - Gestión de Reuniones</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f3f4f6;
+        }
+        .loading {
+            display: none;
+        }
+        .loading.show {
+            display: inline-block;
+        }
+    </style>
+</head>
+<body class="min-h-screen p-4">
+    <div class="max-w-6xl mx-auto">
+        <!-- Header -->
+        <div class="bg-white p-6 rounded-lg shadow-xl mb-6">
+            <h1 class="text-3xl font-extrabold text-blue-600 mb-2">
+                Gestión de Reuniones del Comité Escolar
+            </h1>
+            <p class="text-gray-700">
+                Programa, gestiona y registra las reuniones del comité de padres de familia.
+            </p>
+            <!-- Estado de conexión -->
+            <div id="estadoConexion" class="mt-2">
+                <span class="text-sm text-gray-500">Verificando conexión con la API...</span>
+            </div>
+        </div>
+
+        <!-- Formulario para Programar Reunión -->
+        <div class="bg-white p-6 rounded-lg shadow-xl mb-6">
+            <h2 class="text-2xl font-bold text-gray-800 mb-4">Programar Nueva Reunión</h2>
+            <form id="formReunion" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Fecha</label>
+                    <input type="date" id="fecha" name="fecha" required
+                           class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Hora</label>
+                    <input type="time" id="hora" name="hora" required
+                           class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                </div>
+                <div class="md:col-span-2">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Lugar</label>
+                    <input type="text" id="lugar" name="lugar" required placeholder="Ej: Sala de Juntas"
+                           class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                </div>
+                <div class="md:col-span-2">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Agenda</label>
+                    <textarea id="agenda" name="agenda" rows="3" placeholder="Descripción de los temas a tratar..."
+                              class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"></textarea>
+                </div>
+                <div class="md:col-span-2">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Miembros Invitados</label>
+                    <div id="miembrosContainer" class="space-y-2">
+                        <div class="flex items-center space-x-2">
+                            <input type="checkbox" value="1" class="miembro-checkbox">
+                            <span>Juan Pérez (Director)</span>
+                        </div>
+                        <div class="flex items-center space-x-2">
+                            <input type="checkbox" value="2" class="miembro-checkbox">
+                            <span>María García (Secretario)</span>
+                        </div>
+                        <div class="flex items-center space-x-2">
+                            <input type="checkbox" value="3" class="miembro-checkbox">
+                            <span>Carlos López (Padre de Familia)</span>
+                        </div>
+                        <div class="flex items-center space-x-2">
+                            <input type="checkbox" value="4" class="miembro-checkbox">
+                            <span>Ana Díaz (Tesorero)</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="md:col-span-2">
+                    <button type="submit" id="btnProgramar"
+                            class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-6 rounded-full transition-colors duration-200 shadow-md hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed">
+                        <span class="loading">Programando...</span>
+                        <span class="normal-text">Programar Reunión</span>
+                    </button>
+                </div>
+            </form>
+        </div>
+
+        <!-- Lista de Reuniones -->
+        <div class="bg-white p-6 rounded-lg shadow-xl">
+            <h2 class="text-2xl font-bold text-gray-800 mb-4">Reuniones Programadas</h2>
+            <div id="listaReuniones" class="space-y-4">
+                <div class="text-center text-gray-500">Cargando reuniones...</div>
+            </div>
+        </div>
+
+        <!-- Modal para Registrar Acta -->
+        <div id="modalActa" class="fixed inset-0 bg-gray-600 bg-opacity-50 hidden items-center justify-center z-50">
+            <div class="bg-white p-6 rounded-lg shadow-xl max-w-2xl w-full mx-4">
+                <h3 class="text-xl font-bold text-gray-800 mb-4">Registrar Acta de Reunión</h3>
+                <form id="formActa">
+                    <input type="hidden" id="actaReunionId">
+                    <div class="mb-4">
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Contenido del Acta</label>
+                        <textarea id="contenidoActa" rows="8" required
+                                  class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                  placeholder="Escriba el contenido del acta de la reunión..."></textarea>
+                    </div>
+                    <div class="mb-4">
+                        <label class="flex items-center">
+                            <input type="checkbox" id="generarPdf" checked class="mr-2">
+                            <span class="text-sm text-gray-700">Generar archivo PDF automáticamente</span>
+                        </label>
+                    </div>
+                    <div class="flex justify-end space-x-4">
+                        <button type="button" onclick="cerrarModalActa()"
+                                class="bg-gray-500 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded">
+                            Cancelar
+                        </button>
+                        <button type="submit"
+                                class="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded">
+                            Registrar Acta
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // API Base URL
+        const API_BASE = 'http://127.0.0.1:8000';
+
+        // Variables globales
+        let apiDisponible = false;
+
+        // Verificar conexión con la API al cargar la página
+        document.addEventListener('DOMContentLoaded', function() {
+            verificarConexionAPI();
+        });
+
+        // Verificar si la API está disponible
+        async function verificarConexionAPI() {
+            const estadoElement = document.getElementById('estadoConexion');
+            
+            try {
+                console.log('Verificando conexión con la API...');
+                const response = await fetch(`${API_BASE}/health`, {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    }
+                });
+
+                if (response.ok) {
+                    apiDisponible = true;
+                    estadoElement.innerHTML = '<span class="text-sm text-green-600">✓ Conectado a la API</span>';
+                    console.log('API disponible, cargando reuniones...');
+                    cargarReuniones();
+                } else {
+                    throw new Error(`HTTP ${response.status}`);
+                }
+            } catch (error) {
+                console.error('Error de conexión con la API:', error);
+                apiDisponible = false;
+                estadoElement.innerHTML = '<span class="text-sm text-red-600">✗ Error de conexión con la API. Verifique que FastAPI esté ejecutándose en el puerto 8000.</span>';
+                
+                // Mostrar mensaje en la lista de reuniones
+                document.getElementById('listaReuniones').innerHTML = 
+                    '<div class="text-center text-red-500">No se puede conectar con la API. Asegúrese de que FastAPI esté ejecutándose.</div>';
+            }
+        }
+
+        // Programar nueva reunión
+        document.getElementById('formReunion').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            if (!apiDisponible) {
+                alert('No se puede conectar con la API. Verifique que FastAPI esté ejecutándose.');
+                return;
+            }
+
+            const btnProgramar = document.getElementById('btnProgramar');
+            const loadingSpan = btnProgramar.querySelector('.loading');
+            const normalSpan = btnProgramar.querySelector('.normal-text');
+            
+            // Mostrar estado de carga
+            btnProgramar.disabled = true;
+            loadingSpan.classList.add('show');
+            normalSpan.style.display = 'none';
+            
+            const miembrosSeleccionados = Array.from(document.querySelectorAll('.miembro-checkbox:checked'))
+                .map(checkbox => parseInt(checkbox.value));
+            
+            if (miembrosSeleccionados.length === 0) {
+                alert('Debe seleccionar al menos un miembro para la reunión.');
+                // Restaurar botón
+                btnProgramar.disabled = false;
+                loadingSpan.classList.remove('show');
+                normalSpan.style.display = 'inline';
+                return;
+            }
+
+            const datos = {
+                fecha: document.getElementById('fecha').value,
+                hora: document.getElementById('hora').value + ':00',
+                lugar: document.getElementById('lugar').value,
+                agenda: document.getElementById('agenda').value || null,
+                miembros_solicitados: miembrosSeleccionados
+            };
+
+            console.log('Enviando datos de reunión:', datos);
+
+            try {
+                const response = await fetch(`${API_BASE}/reuniones/`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(datos)
+                });
+
+                console.log('Respuesta del servidor:', response.status);
+
+                if (response.ok) {
+                    const resultado = await response.json();
+                    console.log('Reunión creada:', resultado);
+                    alert('Reunión programada exitosamente');
+                    document.getElementById('formReunion').reset();
+                    cargarReuniones();
+                } else {
+                    const error = await response.json();
+                    console.error('Error del servidor:', error);
+                    alert('Error: ' + (error.detail || 'Error desconocido'));
+                }
+            } catch (error) {
+                console.error('Error de conexión:', error);
+                alert('Error de conexión: ' + error.message);
+            } finally {
+                // Restaurar botón
+                btnProgramar.disabled = false;
+                loadingSpan.classList.remove('show');
+                normalSpan.style.display = 'inline';
+            }
+        });
+
+        // Cargar lista de reuniones
+        async function cargarReuniones() {
+            if (!apiDisponible) {
+                return;
+            }
+
+            try {
+                console.log('Cargando reuniones...');
+                const response = await fetch(`${API_BASE}/reuniones/`);
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}`);
+                }
+                
+                const reuniones = await response.json();
+                console.log('Reuniones cargadas:', reuniones);
+                
+                const container = document.getElementById('listaReuniones');
+                container.innerHTML = '';
+
+                if (reuniones.length === 0) {
+                    container.innerHTML = '<p class="text-gray-500">No hay reuniones programadas.</p>';
+                    return;
+                }
+
+                reuniones.forEach(reunion => {
+                    const reunionElement = document.createElement('div');
+                    reunionElement.className = 'border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow';
+                    
+                    const estadoColor = {
+                        'Programada': 'bg-blue-100 text-blue-800',
+                        'Confirmada': 'bg-green-100 text-green-800',
+                        'Cancelada': 'bg-red-100 text-red-800',
+                        'Finalizada': 'bg-gray-100 text-gray-800'
+                    };
+
+                    reunionElement.innerHTML = `
+                        <div class="flex justify-between items-start mb-2">
+                            <h3 class="text-lg font-semibold text-gray-800">Reunión del ${formatearFecha(reunion.fecha)}</h3>
+                            <span class="px-2 py-1 rounded-full text-xs font-semibold ${estadoColor[reunion.estado] || 'bg-gray-100 text-gray-800'}">
+                                ${reunion.estado}
+                            </span>
+                        </div>
+                        <div class="text-sm text-gray-600 space-y-1 mb-3">
+                            <p><strong>Hora:</strong> ${reunion.hora}</p>
+                            <p><strong>Lugar:</strong> ${reunion.lugar}</p>
+                            ${reunion.agenda ? `<p><strong>Agenda:</strong> ${reunion.agenda}</p>` : ''}
+                        </div>
+                        <div class="flex flex-wrap gap-2">
+                            <button onclick="enviarNotificacion(${reunion.id}, 'recordatorio')" 
+                                    class="bg-yellow-500 hover:bg-yellow-600 text-white text-xs px-3 py-1 rounded">
+                                Enviar Recordatorio
+                            </button>
+                            <button onclick="abrirModalActa(${reunion.id})" 
+                                    class="bg-green-500 hover:bg-green-600 text-white text-xs px-3 py-1 rounded">
+                                Registrar Acta
+                            </button>
+                            <button onclick="exportarPDF(${reunion.id})" 
+                                    class="bg-purple-500 hover:bg-purple-600 text-white text-xs px-3 py-1 rounded">
+                                Exportar PDF
+                            </button>
+                            ${reunion.estado === 'Programada' ? `
+                                <button onclick="cancelarReunion(${reunion.id})" 
+                                        class="bg-red-500 hover:bg-red-600 text-white text-xs px-3 py-1 rounded">
+                                    Cancelar
+                                </button>
+                            ` : ''}
+                        </div>
+                    `;
+                    
+                    container.appendChild(reunionElement);
+                });
+            } catch (error) {
+                console.error('Error al cargar reuniones:', error);
+                document.getElementById('listaReuniones').innerHTML = 
+                    '<div class="text-center text-red-500">Error al cargar las reuniones. Verifique la conexión con la API.</div>';
+            }
+        }
+
+        // Enviar notificación
+        async function enviarNotificacion(idReunion, tipo) {
+            if (!apiDisponible) {
+                alert('No se puede conectar con la API.');
+                return;
+            }
+
+            try {
+                const response = await fetch(`${API_BASE}/reuniones/${idReunion}/notificar`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        tipo: tipo,
+                        mensaje_personalizado: null
+                    })
+                });
+
+                if (response.ok) {
+                    alert('Notificación enviada exitosamente');
+                } else {
+                    const error = await response.json();
+                    alert('Error: ' + error.detail);
+                }
+            } catch (error) {
+                alert('Error de conexión: ' + error.message);
+            }
+        }
+
+        // Abrir modal para registrar acta
+        function abrirModalActa(idReunion) {
+            document.getElementById('actaReunionId').value = idReunion;
+            document.getElementById('modalActa').classList.remove('hidden');
+            document.getElementById('modalActa').classList.add('flex');
+        }
+
+        // Cerrar modal de acta
+        function cerrarModalActa() {
+            document.getElementById('modalActa').classList.add('hidden');
+            document.getElementById('modalActa').classList.remove('flex');
+            document.getElementById('formActa').reset();
+        }
+
+        // Registrar acta
+        document.getElementById('formActa').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            if (!apiDisponible) {
+                alert('No se puede conectar con la API.');
+                return;
+            }
+            
+            const idReunion = document.getElementById('actaReunionId').value;
+            const contenido = document.getElementById('contenidoActa').value;
+            const generarPdf = document.getElementById('generarPdf').checked;
+
+            try {
+                const response = await fetch(`${API_BASE}/reuniones/${idReunion}/acta`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        contenido: contenido,
+                        generar_pdf: generarPdf
+                    })
+                });
+
+                if (response.ok) {
+                    alert('Acta registrada exitosamente');
+                    cerrarModalActa();
+                } else {
+                    const error = await response.json();
+                    alert('Error: ' + error.detail);
+                }
+            } catch (error) {
+                alert('Error de conexión: ' + error.message);
+            }
+        });
+
+        // Exportar PDF
+        async function exportarPDF(idReunion) {
+            if (!apiDisponible) {
+                alert('No se puede conectar con la API.');
+                return;
+            }
+
+            try {
+                const response = await fetch(`${API_BASE}/reuniones/${idReunion}/exportar-pdf`);
+                
+                if (response.ok) {
+                    const result = await response.json();
+                    alert('PDF exportado exitosamente: ' + result.archivo_pdf);
+                } else {
+                    const error = await response.json();
+                    alert('Error: ' + error.detail);
+                }
+            } catch (error) {
+                alert('Error de conexión: ' + error.message);
+            }
+        }
+
+        // Cancelar reunión
+        async function cancelarReunion(idReunion) {
+            if (!apiDisponible) {
+                alert('No se puede conectar con la API.');
+                return;
+            }
+
+            if (!confirm('¿Está seguro de que desea cancelar esta reunión?')) {
+                return;
+            }
+
+            try {
+                const response = await fetch(`${API_BASE}/reuniones/${idReunion}/cancelar`, {
+                    method: 'PUT'
+                });
+
+                if (response.ok) {
+                    alert('Reunión cancelada exitosamente');
+                    cargarReuniones();
+                } else {
+                    const error = await response.json();
+                    alert('Error: ' + error.detail);
+                }
+            } catch (error) {
+                alert('Error de conexión: ' + error.message);
+            }
+        }
+
+        // Formatear fecha
+        function formatearFecha(fecha) {
+            return new Date(fecha + 'T00:00:00').toLocaleDateString('es-ES', {
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric'
+            });
+        }
+    </script>
+</body>
+</html>

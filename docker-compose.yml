@@ -1,7 +1,4 @@
 # docker-compose.yml
-
-version: '3.8'
-
 services:
   sgcpf_db:
     image: postgres:15

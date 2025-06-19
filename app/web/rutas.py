@@ -70,6 +70,13 @@ async def lista_proyectos_escolares(): # Marcado como async para compatibilidad 
 
     return render_template('proyectos.html', proyectos=proyectos_para_html, error=error_mensaje)
 
+@bp_web.route('/reuniones')
+def pagina_reuniones():
+    """
+    Ruta para la página de gestión de reuniones.
+    """
+    return render_template('reuniones.html')
+
 @bp_web.route('/bienvenido')
 def pagina_bienvenida():
     """
@@ -78,5 +85,12 @@ def pagina_bienvenida():
     """
     mensaje = "¡Bienvenido de nuevo al Sistema de Gestión del Comité de Padres de Familia!"
     return render_template('index.html', mensaje=mensaje)
+
+@bp_web.route('/debug-rutas')
+def debug_rutas():
+    """
+    Ruta de debug para verificar que las rutas se están registrando correctamente.
+    """
+    return {"mensaje": "Las rutas web están funcionando correctamente", "rutas_disponibles": ["/", "/proyectos", "/reuniones", "/bienvenido"]}
 
 # Puedes añadir más rutas aquí si es necesario
