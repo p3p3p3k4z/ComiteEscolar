@@ -20,6 +20,8 @@ from app.servicios.encuesta_servicio import ServicioEncuesta
 from app.repositorios.encuesta_repo import RepositorioEncuesta
 from app.repositorios.comite_repo import RepositorioComite
 from app.servicios.comite_servicio import ServicioComite
+from app.servicios.finanzas_servicios import ServicioFinanciero
+from app.repositorios.finanzas_repo import RepositorioFinanzas
 
 from app.db import Session as DBSession
 from app.web import crear_app_web
@@ -526,9 +528,6 @@ def dashboard_padre():
 def dashboard_secretario():
     return render_template('login/templates/sesion_secretario.html', message="Bienvenido, Secretario!")
 
-@bp_web.route('/dashboard/tesorero')
-def dashboard_tesorero():
-    return render_template('login/templates/sesion_tesorero.html', message="Bienvenido, Tesorero!")
 
 @bp_web.route('/dashboard/director')
 def dashboard_director():
@@ -539,7 +538,7 @@ def debug_rutas():
     """
     Ruta de debug para verificar que las rutas se están registrando correctamente.
     """
-    return {"mensaje": "Las rutas web están funcionando correctamente", "rutas_disponibles": ["/", "/proyectos", "/reuniones", "/bienvenido"]}
+    return {"mensaje": "Las rutas web están funcionando correctamente", "rutas_disponibles": ["/", "/proyectos", "/reuniones", "/bienvenido" , "/finanzas"]}
 
 @bp_web.route('/reuniones')
 def pagina_reuniones():
@@ -547,3 +546,131 @@ def pagina_reuniones():
     Ruta para la página de gestión de reuniones.
     """
     return render_template('web/templates/reuniones.html')
+
+
+@bp_web.route('/finanzas/gestion', methods=['GET', 'POST'])
+async def gestion_movimientos_financieros():
+    """
+    Ruta para gestionar (CRUD) los movimientos financieros.
+    """
+    movimientos_para_html = []
+    usuarios_data = []
+    error_mensaje = None
+    success_message = None
+    db_session = None
+
+    try:
+        db_session = DBSession()
+        repo_finanzas = RepositorioFinanzas(db_session)
+        repo_usuarios = RepositorioUsuario(db_session)
+        servicio_finanzas = ServicioFinanciero(repo_finanzas, repo_usuarios)
+        servicio_usuarios = ServicioUsuario(repo_usuarios)
+
+        if request.method == 'POST':
+            operacion = request.form.get('operacion')
+            movimiento_id = request.form.get('id_movimiento')
+
+            if operacion == 'crear':
+                tipo = request.form.get('tipo')
+                monto = float(request.form.get('monto'))
+                concepto = request.form.get('concepto')
+                fecha_str = request.form.get('fecha')
+                id_usuario = int(request.form.get('id_usuario'))
+
+                fecha = datetime.strptime(fecha_str, '%Y-%m-%d').date()
+
+                try:
+                    servicio_finanzas.crear_movimiento(
+                        tipo=tipo,
+                        monto=monto,
+                        concepto=concepto,
+                        fecha=fecha,
+                        id_usuario=id_usuario
+                    )
+                    success_message = "Movimiento financiero creado correctamente."
+                except ValueError as e:
+                    error_mensaje = str(e)
+                except Exception as e:
+                    error_mensaje = f"Error interno al crear movimiento: {e}"
+
+            elif operacion == 'editar':
+                if not movimiento_id:
+                    error_mensaje = "ID del movimiento no proporcionado."
+                else:
+                    tipo = request.form.get('tipo')
+                    monto = float(request.form.get('monto'))
+                    concepto = request.form.get('concepto')
+                    fecha_str = request.form.get('fecha')
+                    id_usuario = int(request.form.get('id_usuario'))
+
+                    fecha = datetime.strptime(fecha_str, '%Y-%m-%d').date()
+
+                    try:
+                        servicio_finanzas.actualizar_movimiento(
+                            id_movimiento=int(movimiento_id),
+                            tipo=tipo,
+                            monto=monto,
+                            concepto=concepto,
+                            fecha=fecha,
+                            id_usuario=id_usuario
+                        )
+                        success_message = f"Movimiento con ID {movimiento_id} actualizado exitosamente."
+                    except ValueError as e:
+                        error_mensaje = str(e)
+                    except Exception as e:
+                        error_mensaje = f"Error al actualizar movimiento: {e}"
+
+            elif operacion == 'eliminar':
+                if not movimiento_id:
+                    error_mensaje = "ID del movimiento no proporcionado para eliminar."
+                else:
+                    try:
+                        servicio_finanzas.eliminar_movimiento(int(movimiento_id))
+                        success_message = f"Movimiento con ID {movimiento_id} eliminado correctamente."
+                    except Exception as e:
+                        error_mensaje = f"Error al eliminar movimiento: {e}"
+
+            return redirect(url_for('web.gestion_movimientos_financieros', success=success_message, error=error_mensaje))
+
+        # Cargar datos para la vista GET
+        movimientos = servicio_finanzas.obtener_todos_los_movimientos()
+        usuarios = servicio_usuarios.obtener_todos_los_usuarios()
+        usuarios_map = {u.id: f"{u.nombre} {u.apellido}" for u in usuarios}
+
+        for m in movimientos:
+            movimientos_para_html.append({
+                "id": m.id,
+                "tipo": m.type,
+                "monto": m.amount,
+                "concepto": m.concept,
+                "fecha": m.fecha_transaccion.strftime('%Y-%m-%d'),
+                "registrado_por": usuarios_map.get(m.id_usuario, "Desconocido"),
+                "id_usuario": m.id_usuario
+            })
+
+        for u in usuarios:
+            usuarios_data.append({
+                "id": u.id,
+                "nombre": u.nombre,
+                "apellido": u.apellido
+            })
+
+    except Exception as e:
+        error_mensaje = f"Error general en gestión de finanzas: {e}"
+        print(f"ERROR en gestión_movimientos_financieros: {e}")
+    finally:
+        if db_session:
+            db_session.close()
+
+    if 'success' in request.args:
+        success_message = request.args.get('success')
+    if 'error' in request.args:
+        error_mensaje = request.args.get('error')
+
+    return render_template(
+        'web/templates/finanzas_crud.html',
+        movimientos=movimientos_para_html,
+        usuarios=usuarios_data,
+        error=error_mensaje,
+        success=success_message
+    )

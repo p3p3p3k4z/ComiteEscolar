@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8" />
+    <title>Gestión de Finanzas</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #f9f9f9;
+            margin: 0;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: auto;
+            background: white;
+            padding: 20px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+            border-radius: 8px;
+        }
+
+        h1, h2 {
+            color: #333;
+        }
+
+        .alert {
+            padding: 10px;
+            margin-bottom: 15px;
+            border-radius: 4px;
+        }
+
+        .alert-success {
+            background-color: #d4edda;
+            color: #155724;
+        }
+
+        .alert-error {
+            background-color: #f8d7da;
+            color: #721c24;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 6px;
+            font-weight: 600;
+        }
+
+        input[type="text"],
+        input[type="number"],
+        input[type="date"],
+        select {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #bbb;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+
+        button.btn {
+            padding: 8px 15px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: 600;
+        }
+
+        button.btn-primary {
+            background-color: #007bff;
+            color: white;
+        }
+
+        button.btn-secondary {
+            background-color: #6c757d;
+            color: white;
+        }
+
+        button.btn-danger {
+            background-color: #dc3545;
+            color: white;
+        }
+
+        button.btn-small {
+            font-size: 0.85rem;
+            padding: 5px 10px;
+        }
+
+        .form-eliminar {
+            display: inline;
+        }
+
+        .tabla-estilizada {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .tabla-estilizada th,
+        .tabla-estilizada td {
+            border: 1px solid #ddd;
+            padding: 10px;
+            text-align: left;
+        }
+
+        .tabla-estilizada th {
+            background-color: #f2f2f2;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Gestión de Movimientos Financieros</h1>
+
+        {% if success %}
+            <div class="alert alert-success">{{ success }}</div>
+        {% endif %}
+        {% if error %}
+            <div class="alert alert-error">{{ error }}</div>
+        {% endif %}
+
+        <section class="form-section">
+            <h2>Agregar / Editar Movimiento</h2>
+            <form method="post" class="form-finanzas">
+                <input type="hidden" name="operacion" value="crear" id="operacion" />
+                <input type="hidden" name="id_movimiento" id="id_movimiento" />
+
+                <div class="form-group">
+                    <label for="tipo">Tipo:</label>
+                    <input type="text" name="tipo" id="tipo" required />
+                </div>
+
+                <div class="form-group">
+                    <label for="monto">Monto:</label>
+                    <input type="number" step="0.01" name="monto" id="monto" required />
+                </div>
+
+                <div class="form-group">
+                    <label for="concepto">Concepto:</label>
+                    <input type="text" name="concepto" id="concepto" required />
+                </div>
+
+                <div class="form-group">
+                    <label for="fecha">Fecha:</label>
+                    <input type="date" name="fecha" id="fecha" required />
+                </div>
+
+                <div class="form-group">
+                    <label for="id_usuario">Registrado por:</label>
+                    <select name="id_usuario" id="id_usuario" required>
+                        {% for u in usuarios %}
+                            {% if u.id == 4 %}
+                                <option value="{{ u.id }}" >
+                                    {{ u.nombre }} {{ u.apellido }}
+                                </option>
+                            {% endif %}
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <button type="submit" class="btn btn-primary">Guardar Movimiento</button>
+                <button type="button" class="btn btn-secondary" onclick="limpiarFormulario()">Limpiar</button>
+            </form>
+        </section>
+
+        <hr />
+
+        <section class="tabla-movimientos">
+            <h2>Movimientos Existentes</h2>
+            <table class="tabla-estilizada">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Tipo</th>
+                        <th>Monto</th>
+                        <th>Concepto</th>
+                        <th>Fecha</th>
+                        <th>Registrado por</th>
+                        <th>Acciones</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for m in movimientos %}
+                    <tr>
+                        <td>{{ m.id }}</td>
+                        <td>{{ m.tipo }}</td>
+                        <td>${{ "%.2f"|format(m.monto) }}</td>
+                        <td>{{ m.concepto }}</td>
+                        <td>{{ m.fecha }}</td>
+                        <td>{{ m.registrado_por }}</td>
+                        <td>
+                            <button class="btn btn-secondary btn-small" onclick="cargarFormulario('{{ m.id }}', '{{ m.tipo }}', '{{ m.monto }}', '{{ m.concepto }}', '{{ m.fecha }}', '{{ m.id_usuario }}')">Editar</button>
+
+                            <form method="post" class="form-eliminar" onsubmit="return confirm('¿Eliminar este movimiento?')">
+                                <input type="hidden" name="operacion" value="eliminar" />
+                                <input type="hidden" name="id_movimiento" value="{{ m.id }}" />
+                                <button type="submit" class="btn btn-danger btn-small">Eliminar</button>
+                            </form>
+                        </td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="7" style="text-align:center;">No hay movimientos registrados.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </section>
+    </div>
+
+    <script>
+        function cargarFormulario(id, tipo, monto, concepto, fecha, id_usuario) {
+            document.getElementById('operacion').value = 'editar';
+            document.getElementById('id_movimiento').value = id;
+            document.getElementById('tipo').value = tipo;
+            document.getElementById('monto').value = monto;
+            document.getElementById('concepto').value = concepto;
+            document.getElementById('fecha').value = fecha;
+            document.getElementById('id_usuario').value = id_usuario;
+        }
+        function limpiarFormulario() {
+        document.getElementById('operacion').value = 'crear';
+        document.getElementById('id_movimiento').value = '';
+        document.getElementById('tipo').selectedIndex = 0;
+        document.getElementById('monto').value = '';
+        document.getElementById('concepto').value = '';
+        document.getElementById('fecha').value = '';
+    }
+    </script>
+</body>
+</html>

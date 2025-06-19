@@ -9,6 +9,7 @@ from contextlib import asynccontextmanager
 from app.api import proyectos # Importa el módulo de rutas de proyectos
 from app.api import usuarios # Importa el nuevo módulo de rutas de usuarios
 from app.api import reuniones # Importa el nuevo módulo de rutas de reuniones
+from app.api import finanzas
 
 # Define un gestor de contexto de ciclo de vida para manejar la conexión/desconexión de la BD
 @asynccontextmanager
@@ -39,6 +40,7 @@ app.add_middleware(
 app.include_router(proyectos.router)
 app.include_router(usuarios.router) # Incluye el router de usuarios
 app.include_router(reuniones.router) # Incluye el router de reuniones
+app.include_router(finanzas.router)  # Añadido router de finanzas
 
 # Puedes añadir más routers aquí (ej. app.api.comites.router)
 

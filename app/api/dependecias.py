@@ -13,6 +13,9 @@ from app.repositorios.reunion_repo import (
 )
 from app.servicios.reunion_servicio import ServicioReunion
 from fastapi import Depends
+from app.repositorios.finanzas_repo import RepositorioFinanzas
+from app.servicios.finanzas_servicios import ServicioFinanciero
+
 
 
 def obtener_bd():
@@ -90,3 +93,17 @@ def obtener_servicio_reunion(
     Provee una instancia de ServicioReunion.
     """
     return ServicioReunion(repo_reunion, repo_miembro_reunion, repo_notificacion, repo_acta, repo_usuario)
+
+def obtener_repositorio_finanzas(db: SesionBD = Depends(obtener_bd)) -> RepositorioFinanzas:
+    """
+    Provee una instancia de RepositorioFinanzas.
+    """
+    return RepositorioFinanzas(db)
+
+def obtener_servicio_financiero(
+    repositorio_finanzas: RepositorioFinanzas = Depends(obtener_repositorio_finanzas)
+) -> ServicioFinanciero:
+    """
+    Provee una instancia del servicio financiero.
+    """
+    return ServicioFinanciero(repositorio_finanzas)
